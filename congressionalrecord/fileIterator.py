@@ -14,6 +14,7 @@ def main():
 	        #print (os.path.join(subdir, file))
 	      f.close()
 	      contents = cleanContents(contents)
+	      contents = cleanForSpeeches(contents)
 	      print(contents)
 
 def cleanContents(contents):
@@ -26,4 +27,26 @@ def cleanContents(contents):
   	ret = ret[retstart:retend]
   return ret
 
+def cleanForSpeeches(contents):
+  record = ""
+  while (True):
+    if ("Mr." not in contents and "Mrs." not in contents and "Ms." not in contents):
+      break
+    else:
+      spotToCheck = float('inf')
+      prefixes = ["Mr. ", "Mrs. ", "Ms. "]
+      for prefix in prefixes:
+      	temp = contents.find(prefix)
+      	if temp >= 0 and temp < spotToCheck:
+      	  spotToCheck = temp + len(prefix)
+
+      #TODO: Account for names like McGOVERN and LaMALFA
+      if (contents[spotToCheck+1].isupper() and contents[spotToCheck+2].isupper()):
+   	  	contents = contents[spotToCheck:]
+   	  	continue
+      else:
+   	    endSpot = contents.find("____________________")
+   	    record += contents[spotToCheck:endSpot]
+   	    contents = contents[endSpot:]
+  return record
 main()
