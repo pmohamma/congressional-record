@@ -3,8 +3,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 import os
 import sys
-from .pg_run.pg_cr_bulkwrite import crToPG as cr
-from .govinfo.downloader import Downloader as dl
+from pg_run.pg_cr_bulkwrite import crToPG as cr
+from govinfo.downloader import Downloader as dl
 import argparse
 import logging
 
