@@ -21,8 +21,8 @@ def cleanContents(contents):
   bodyend = contents.index('</body>')
   ret = contents[bodystart:bodyend]
   if (ret.index("<pre>") != -1):
-  	retstart = contents.index('<pre>') + 5
-  	retend = contents.index('</pre>')
+  	retstart = ret.index('<pre>') + 5
+  	retend = ret.index('</pre>')
   	ret = ret[retstart:retend]
   return ret
 
