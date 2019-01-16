@@ -7,7 +7,12 @@ for subdir, dirs, files in os.walk(rootdir):
     if file.endswith('.htm'):
       fname = subdir + '\\'+ file
       f = open(fname, 'r')
+      contents = ""
       for line in f:
-        print(line)
+        contents += line
         #print (os.path.join(subdir, file))
       f.close()
+      bodystart = contents.index('<body>') + 6
+      bodyend = contents.index('</body>')
+      contents = contents[bodystart:bodyend]
+      print(contents)
