@@ -3,6 +3,10 @@ import os
 
 def main():
     rootdir = 'C:/Users/pouya\python-projects\congressional-record\congressionalrecord\output'
+    writer = open("writer.txt", 'w')
+    writer.close()
+    dirtyWriter = open("dirtyWriter.txt", 'w')
+    dirtyWriter.close()
 
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
@@ -15,8 +19,11 @@ def main():
                     # print (os.path.join(subdir, file))
                 f.close()
                 contents = cleanContents(contents)
+                dirtyWriter = open("dirtyWriter.txt", 'a')
+                dirtyWriter.write(contents)
+                dirtyWriter.close()
                 contents = cleanForSpeeches(contents)
-                print(contents)
+                #print(contents)
 
 
 def cleanContents(contents):
@@ -58,20 +65,21 @@ def findNextSpeaker(contents):
 
 def cleanForSpeeches(contents):
     record = ""
+    recordList = []
     while (True):
-        if ("Mr." not in contents and "Mrs." not in contents and "Ms." not in contents):
+        if ("2018\n" not in contents and "2019\n" not in contents):
             break
         else:
             spotToCheck = float('inf')
-            prefixes = ["Mr. ", "Mrs. ", "Ms. "]
+            prefixes = ["2018\n", "2019\n"]
             for prefix in prefixes:
                 temp = contents.find(prefix)
                 if temp >= 0 and temp < spotToCheck:
                     spotToCheck = temp + len(prefix)
 
             # TODO: Account for names like McGOVERN and LaMALFA
-            if (contents[spotToCheck + 1].isupper() and contents[spotToCheck + 3].isupper()):
-                contents = contents[spotToCheck:]
+            #if (contents[spotToCheck + 1].isupper() and contents[spotToCheck + 3].isupper()):
+            contents = contents[spotToCheck:]
                 #continue
             #else:
             endSpot = float('inf')
@@ -81,8 +89,14 @@ def cleanForSpeeches(contents):
 
             if endSpot == float('inf'):
                 endSpot = len(contents)
-            record += contents[spotToCheck:endSpot]
+            recordList.append(contents[:endSpot])
+            record += contents[:endSpot]
             contents = contents[endSpot:]
+    writer = open("writer.txt", 'a')
+    for r in recordList:
+        for ch in r:
+            writer.write(ch)
+        writer.write("\n\n\n")
     return record
 
     """
