@@ -7,6 +7,7 @@ def main():
     writer.close()
     dirtyWriter = open("dirtyWriter.txt", 'w')
     dirtyWriter.close()
+    speakerDict = {}
 
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
@@ -22,9 +23,20 @@ def main():
                 dirtyWriter = open("dirtyWriter.txt", 'a')
                 dirtyWriter.write(contents)
                 dirtyWriter.close()
-                contents = cleanForSpeeches(contents)
-                #print(contents)
+                contentList = cleanForSpeeches(contents)
+                for r in contentList:
+                    nameEnd = findNth(r, ".", 2)
+                    name = r[0:nameEnd]
+                    if name not in speakerDict:
+                        speakerDict[name] = list()
+                    print(name)
+                    print(type(speakerDict[name]))
+                    print(speakerDict[name])
+                    speakerDict[name].append(r[nameEnd:])
 
+    for speaker in speakerDict:
+        for speech in speakerDict[speaker]:
+            print(speech + "\n\n")
 
 def cleanContents(contents):
     bodystart = contents.index('<body>') + 6
@@ -35,32 +47,6 @@ def cleanContents(contents):
         retend = ret.index('</pre>')
         ret = ret[retstart:retend]
     return ret
-
-
-"""
-def findNextSpeaker(contents):
-	ret = float('inf')
-	while (ret == float('inf') and len(contents) > 0):
-		spotToCheck = float('inf')
-		endSpot = float('inf')
-		findEndBreak = contents.find("____________________")
-		if findEndBreak != -1:
-		  endSpot = findEndBreak
-		prefixes = ["Mr. ", "Mrs. ", "Ms. "]
-		if (endSpot == float('inf') and "Mr. " not in contents and "Mrs. " not in contents and "Ms. " not in contents):
-			break
-		for prefix in prefixes:
-			temp = contents.find(prefix)
-			if temp >= 0 and temp < spotToCheck:
-				spotToCheck = temp + len(prefix)
-		print(spotToCheck)
-		if spotToCheck != float('inf'):
-			contents = contents[spotToCheck:]
-			if not (contents[spotToCheck+1].isupper() and contents[spotToCheck+3].isupper()):
-			  spotToCheck = float('inf')
-		ret = min(endSpot, spotToCheck)
-	return ret
-"""
 
 
 def cleanForSpeeches(contents):
@@ -89,27 +75,22 @@ def cleanForSpeeches(contents):
 
             if endSpot == float('inf'):
                 endSpot = len(contents)
-            recordList.append(contents[:endSpot])
-            record += contents[:endSpot]
-            contents = contents[endSpot:]
+            if (contents[3:4] == 'M'): #checks for if it is a speaker or a formality
+                recordList.append(contents[:endSpot])
+                record += contents[:endSpot]
+                contents = contents[endSpot:]
     writer = open("writer.txt", 'a')
     for r in recordList:
         for ch in r:
             writer.write(ch)
         writer.write("\n\n\n")
-    return record
+    return recordList
 
-    """
-    spotToCheck = findNextSpeaker(contents)
-    temp = contents[spotToCheck]
-    endSpot = findNextSpeaker(temp) + spotToCheck
-    print(spotToCheck)
-    print(endSpot)
-    record += contents[spotToCheck:endSpot]
-    contents = contents[endSpot:]
-return record
-
-"""
-
+def findNth(haystack, needle, n):
+    start = haystack.find(needle)
+    while start >= 0 and n > 1:
+        start = haystack.find(needle, start+len(needle))
+        n -= 1
+    return start
 
 main()
