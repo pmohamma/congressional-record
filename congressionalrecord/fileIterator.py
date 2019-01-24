@@ -8,11 +8,13 @@ def main():
     dirtyWriter = open("dirtyWriter.txt", 'w')
     dirtyWriter.close()
     speakerDict = {}
+    numberOfDays = {"ignore this day"}
 
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
             if file.endswith('.htm'):
                 fname = subdir + '\\' + file
+                numberOfDays.add(subdir)
                 f = open(fname, 'r')
                 contents = ""
                 for line in f:
@@ -29,14 +31,15 @@ def main():
                     name = r[0:nameEnd]
                     if name not in speakerDict:
                         speakerDict[name] = list()
-                    print(name)
-                    print(type(speakerDict[name]))
-                    print(speakerDict[name])
                     speakerDict[name].append(r[nameEnd:])
 
+    numberOfSpeeches = 0
     for speaker in speakerDict:
-        for speech in speakerDict[speaker]:
-            print(speech + "\n\n")
+        print(speaker + ":    " + str(len(speakerDict[speaker])))
+        numberOfSpeeches += len(speakerDict[speaker])
+        #for speech in speakerDict[speaker]:
+            #print(speech + "\n\n")
+    print(str(numberOfSpeeches) + " speeches over " + str(len(numberOfDays) - 1) + " days")
 
 def cleanContents(contents):
     bodystart = contents.index('<body>') + 6
