@@ -45,7 +45,12 @@ def main():
             wordStems[speaker] = list()
         for speech in speakerDict[speaker]:
             speechWords = word_tokenize(speech)
+            count = 0
+            for w in speechWords:
+                speechWords[count] = ps.stem(w)
+                count += 1
             wordStems[speaker].append(speechWords)
+            print(" ".join(speechWords))
             #TODO: Work on finishing this stemming
 
     print(str(numberOfSpeeches) + " speeches over " + str(len(numberOfDays) - 1) + " days")
