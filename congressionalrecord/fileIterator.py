@@ -1,5 +1,7 @@
 import os
 import re
+from nltk.stem import PorterStemmer
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 def main():
     rootdir = 'C:/Users/pouya\python-projects\congressional-record\congressionalrecord\output'
@@ -9,6 +11,7 @@ def main():
     dirtyWriter.close()
     speakerDict = {}
     numberOfDays = {"ignore this day"}
+    wordStems = {}
 
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
@@ -34,11 +37,17 @@ def main():
                     speakerDict[name].append(r[nameEnd:])
 
     numberOfSpeeches = 0
+    ps = PorterStemmer()
     for speaker in speakerDict:
         print(speaker + ":    " + str(len(speakerDict[speaker])))
         numberOfSpeeches += len(speakerDict[speaker])
-        #for speech in speakerDict[speaker]:
-            #print(speech + "\n\n")
+        if speaker not in wordStems:
+            wordStems[speaker] = list()
+        for speech in speakerDict[speaker]:
+            speechWords = word_tokenize(speech)
+            wordStems[speaker].append(speechWords)
+            #TODO: Work on finishing this stemming
+
     print(str(numberOfSpeeches) + " speeches over " + str(len(numberOfDays) - 1) + " days")
 
 def cleanContents(contents):
@@ -66,11 +75,7 @@ def cleanForSpeeches(contents):
                 if temp >= 0 and temp < spotToCheck:
                     spotToCheck = temp + len(prefix)
 
-            # TODO: Account for names like McGOVERN and LaMALFA
-            #if (contents[spotToCheck + 1].isupper() and contents[spotToCheck + 3].isupper()):
             contents = contents[spotToCheck:]
-                #continue
-            #else:
             endSpot = float('inf')
             findEndBreak = contents.find("____________________")
             if findEndBreak != -1:
@@ -84,8 +89,19 @@ def cleanForSpeeches(contents):
                 page = pageFinder.group(0)
                 contents = contents.replace(page, '')
                 pageLoc = contents.find("[[Page ")
-                print(pageLoc)
+            underscoreLoc = contents.find("______________")
+            while (underscoreLoc != -1):
+                underscoreFinder = re.search('[_]+', contents)
+                underscore = underscoreFinder.group(0)
+                contents = contents.replace(underscore, '')
+                underscoreLoc = contents.find("______________")
+            lineBreakLoc = contents.find("\n\n")
+            while (lineBreakLoc != -1):
+                contents = contents.replace("\n\n", "\n")
+                lineBreakLoc = contents.find("\n\n")
+
             if (contents[3:4] == 'M'): #checks for if it is a speaker or a formality
+
                 recordList.append(contents[:endSpot])
                 record += contents[:endSpot]
                 contents = contents[endSpot:]
