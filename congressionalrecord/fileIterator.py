@@ -1,5 +1,5 @@
 import os
-
+import re
 
 def main():
     rootdir = 'C:/Users/pouya\python-projects\congressional-record\congressionalrecord\output'
@@ -78,6 +78,13 @@ def cleanForSpeeches(contents):
 
             if endSpot == float('inf'):
                 endSpot = len(contents)
+            pageLoc = contents.find("[[Page ")
+            while (pageLoc != -1):
+                pageFinder = re.search('[[][[][P][a][g][e][ ].[0-9]+]]', contents)
+                page = pageFinder.group(0)
+                contents = contents.replace(page, '')
+                pageLoc = contents.find("[[Page ")
+                print(pageLoc)
             if (contents[3:4] == 'M'): #checks for if it is a speaker or a formality
                 recordList.append(contents[:endSpot])
                 record += contents[:endSpot]
