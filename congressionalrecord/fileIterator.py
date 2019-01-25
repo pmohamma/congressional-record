@@ -39,7 +39,7 @@ def main():
     numberOfSpeeches = 0
     ps = PorterStemmer()
     for speaker in speakerDict:
-        print(speaker + ":    " + str(len(speakerDict[speaker])))
+        #print(speaker + ":    " + str(len(speakerDict[speaker])))
         numberOfSpeeches += len(speakerDict[speaker])
         if speaker not in wordStems:
             wordStems[speaker] = list()
@@ -50,7 +50,7 @@ def main():
                 speechWords[count] = ps.stem(w)
                 count += 1
             wordStems[speaker].append(speechWords)
-            print(" ".join(speechWords))
+            #print(" ".join(speechWords))
             #TODO: Work on finishing this stemming
 
     print(str(numberOfSpeeches) + " speeches over " + str(len(numberOfDays) - 1) + " days")
@@ -67,6 +67,7 @@ def cleanContents(contents):
 
 
 def cleanForSpeeches(contents):
+    #TODO: One Instance where it is not a speaker but it says "DEMOCRATIC RESPONSE TO GUN VIOLENCE". Account for this
     record = ""
     recordList = []
     while (True):
@@ -79,6 +80,8 @@ def cleanForSpeeches(contents):
                 temp = contents.find(prefix)
                 if temp >= 0 and temp < spotToCheck:
                     spotToCheck = temp + len(prefix)
+
+            backgroundInfo = collectInfo(spotToCheck, contents) #gather speaker, state, chamber, and date
 
             contents = contents[spotToCheck:]
             endSpot = float('inf')
@@ -106,16 +109,42 @@ def cleanForSpeeches(contents):
                 lineBreakLoc = contents.find("\n\n")
 
             if (contents[3:4] == 'M'): #checks for if it is a speaker or a formality
-
                 recordList.append(contents[:endSpot])
                 record += contents[:endSpot]
                 contents = contents[endSpot:]
+                print(" ".join(backgroundInfo))
+
     writer = open("writer.txt", 'a')
     for r in recordList:
         for ch in r:
             writer.write(ch)
         writer.write("\n\n\n")
     return recordList
+
+def collectInfo(num, contents):
+    check = num
+    date = ""
+    speaker = ""
+    chamber = ""
+    state = ""
+    lines = 0
+    temp = 0
+    while check >= 0:
+        if contents[check] == "\n":
+            lines += 1
+            if lines%2 == 0:
+                temp = check
+            if lines == 3:
+                date = contents[check:temp]
+            if lines == 5:
+                chamber = contents[check:temp].replace("in the ", "")
+            if lines == 7:
+                state = contents[check:temp].replace("of ", "")
+            if lines == 9:
+                speaker = contents[check:temp].replace("HON. ", "")
+                break
+        check -=1
+    return [speaker, state, chamber, date]
 
 def findNth(haystack, needle, n):
     start = haystack.find(needle)
