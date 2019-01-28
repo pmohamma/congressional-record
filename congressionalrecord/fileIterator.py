@@ -44,6 +44,8 @@ def main():
         if speaker not in wordStems:
             wordStems[speaker] = list()
         for speech in speakerDict[speaker]:
+            if len(speakerDict[speaker]) == 1:
+                print(speech)
             speechWords = word_tokenize(speech)
             count = 0
             for w in speechWords:
@@ -104,16 +106,18 @@ def cleanForSpeeches(contents):
                 lineBreakLoc = contents.find("\n\n")
 
             if (contents[0:1] == 'M'): #checks for if it is a speaker or a formality
-                recordList.append(contents[:endSpot])
-                record += contents[:endSpot]
+                 if "[Roll No. " not in contents[:endSpot]:
+                    recordList.append(contents[:endSpot])
+                    record += contents[:endSpot]
             contents = contents[endSpot:]
-                #print(" ".join(backgroundInfo))
+            #print(" ".join(backgroundInfo))
 
     writer = open("writer.txt", 'a')
     for r in recordList:
         for ch in r:
             writer.write(ch)
         writer.write("\n\n\n")
+    writer.close()
     return recordList
 
 def collectInfo(num, contents):
@@ -142,12 +146,11 @@ def collectInfo(num, contents):
     return [speaker, state, chamber, date]
 
 def findSpeaker(contents):
-    speakerSearch = re.search('[M][r,s]+'r'. ''[A-Z]+[.]', contents)
+    speakerSearch = re.search('[M][r,s]{1,2}'r'. ''[A-Z]+[.]', contents)
     try:
         speaker = speakerSearch.group(0)
     except:
         speaker = "zzzzzzzzzzzzzzzzzzz"
-    print(speaker)
     return speaker
 
 def findFirstOcc(array, contents, startBool = False):
