@@ -39,7 +39,7 @@ def main():
     numberOfSpeeches = 0
     ps = PorterStemmer()
     for speaker in speakerDict:
-        #print(speaker + ":    " + str(len(speakerDict[speaker])))
+        print(speaker + ":    " + str(len(speakerDict[speaker])))
         numberOfSpeeches += len(speakerDict[speaker])
         if speaker not in wordStems:
             wordStems[speaker] = list()
@@ -71,23 +71,18 @@ def cleanForSpeeches(contents):
     record = ""
     recordList = []
     while (True):
-        if ("2018\n" not in contents and "2019\n" not in contents):
+        speaker = findSpeaker(contents)
+        if ("2018\n" not in contents and "2019\n" not in contents and speaker not in contents):
             break
         else:
-            spotToCheck = float('inf')
-            prefixes = ["2018\n", "2019\n"]
-            for prefix in prefixes:
-                temp = contents.find(prefix)
-                if temp >= 0 and temp < spotToCheck:
-                    spotToCheck = temp + len(prefix)
+            prefixes = ["2018\n", "2019\n", speaker]
+            spotToCheck = findFirstOcc(prefixes, contents, True)
 
             backgroundInfo = collectInfo(spotToCheck, contents) #gather speaker, state, chamber, and date
 
             contents = contents[spotToCheck:]
-            endSpot = float('inf')
-            findEndBreak = contents.find("____________________")
-            if findEndBreak != -1:
-                endSpot = findEndBreak
+            possibleEnds = ["____________________", findSpeaker(contents)]
+            endSpot = findFirstOcc(possibleEnds, contents[spotToCheck+3:]) #returns inf if not existent
 
             if endSpot == float('inf'):
                 endSpot = len(contents)
@@ -108,11 +103,11 @@ def cleanForSpeeches(contents):
                 contents = contents.replace("\n\n", "\n")
                 lineBreakLoc = contents.find("\n\n")
 
-            if (contents[3:4] == 'M'): #checks for if it is a speaker or a formality
+            if (contents[0:1] == 'M'): #checks for if it is a speaker or a formality
                 recordList.append(contents[:endSpot])
                 record += contents[:endSpot]
-                contents = contents[endSpot:]
-                print(" ".join(backgroundInfo))
+            contents = contents[endSpot:]
+                #print(" ".join(backgroundInfo))
 
     writer = open("writer.txt", 'a')
     for r in recordList:
@@ -145,6 +140,29 @@ def collectInfo(num, contents):
                 break
         check -=1
     return [speaker, state, chamber, date]
+
+def findSpeaker(contents):
+    speakerSearch = re.search('[M][r,s]+'r'. ''[A-Z]+[.]', contents)
+    try:
+        speaker = speakerSearch.group(0)
+    except:
+        speaker = "zzzzzzzzzzzzzzzzzzz"
+    print(speaker)
+    return speaker
+
+def findFirstOcc(array, contents, startBool = False):
+    spotToCheck = float('inf')
+    for prefix in array:
+        temp = contents.find(prefix)
+        if temp >= 0 and temp < spotToCheck:
+            if startBool:
+                if prefix == array[2]:
+                    spotToCheck = temp
+                else:
+                    spotToCheck = temp + len(prefix) + 3
+            else:
+                spotToCheck = temp
+    return spotToCheck
 
 def findNth(haystack, needle, n):
     start = haystack.find(needle)
