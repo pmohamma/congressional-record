@@ -70,7 +70,6 @@ def cleanContents(contents):
 
 
 def cleanForSpeeches(contents):
-    #TODO: One Instance where it is not a speaker but it says "DEMOCRATIC RESPONSE TO GUN VIOLENCE". Account for this
     record = ""
     recordList = []
     while (True):
