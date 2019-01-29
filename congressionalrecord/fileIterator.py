@@ -9,10 +9,13 @@ def main():
     writer.close()
     dirtyWriter = open("dirtyWriter.txt", 'w')
     dirtyWriter.close()
+    fullWriter = open("fullWriter.txt", 'w')
+    fullWriter.close()
     speakerDict = {}
     numberOfDays = {"ignore this day"}
     wordStems = {}
 
+    dirtyWriter = open("dirtyWriter.txt", 'a')
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
             if file.endswith('.htm'):
@@ -25,9 +28,7 @@ def main():
                     # print (os.path.join(subdir, file))
                 f.close()
                 contents = cleanContents(contents)
-                dirtyWriter = open("dirtyWriter.txt", 'a')
                 dirtyWriter.write(contents)
-                dirtyWriter.close()
                 contentList = cleanForSpeeches(contents)
                 for r in contentList:
                     nameEnd = findNth(r, ".", 2)
@@ -35,7 +36,7 @@ def main():
                     if name not in speakerDict:
                         speakerDict[name] = list()
                     speakerDict[name].append(r[nameEnd:])
-
+    dirtyWriter.close()
     numberOfSpeeches = 0
     ps = PorterStemmer()
     for speaker in speakerDict:
@@ -83,8 +84,8 @@ def cleanForSpeeches(contents):
             backgroundInfo = collectInfo(spotToCheck, contents) #gather speaker, state, chamber, and date
 
             contents = contents[spotToCheck:]
-            possibleEnds = ["____________________", findSpeaker(contents)]
-            endSpot = findFirstOcc(possibleEnds, contents[spotToCheck+3:]) #returns inf if not existent
+            possibleEnds = ["____________________", findSpeaker(contents[3:])]
+            endSpot = findFirstOcc(possibleEnds, contents[3:]) #returns inf if not existent
 
             if endSpot == float('inf'):
                 endSpot = len(contents)
