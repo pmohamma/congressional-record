@@ -19,6 +19,9 @@ def main():
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
             if file.endswith('.htm'):
+                yearGroup = re.search(r'\\20''[0-9]{2}')
+                year = yearGroup.group[0][1:] #stores year that speech was given.
+                date = subdir[-10:-5] #stores date that speech was given
                 fname = subdir + '\\' + file
                 numberOfDays.add(subdir)
                 f = open(fname, 'r')

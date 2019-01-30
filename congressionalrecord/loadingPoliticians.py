@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 import json
-from politician import Politician
 from bs4 import BeautifulSoup
 
 def main():
