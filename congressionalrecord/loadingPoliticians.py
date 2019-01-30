@@ -19,6 +19,7 @@ def main():
 
     currentSenate = tables[0]
     currentHouse = tables[1]
+    print(currentSenate)
 
     createDictionaries(senateData, currentSenate)
     createDictionaries(houseData, currentHouse)
