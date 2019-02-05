@@ -1,7 +1,9 @@
 import os
 import re
+import json
 from nltk.stem import PorterStemmer
-from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 
 def main():
     rootdir = 'C:/Users/pouya\python-projects\congressional-record\congressionalrecord\output'
@@ -14,14 +16,24 @@ def main():
     speakerDict = {}
     numberOfDays = {"ignore this day"}
     wordStems = {}
+    stopWords = set(stopwords.words('english'))
+    f = open("currentLegislators.json", "r")
+    currentLegislators = json.load(f)
+    f.close()
+    f = open("historicalLegislators.json", "r")
+    historicalLegislators = json.load(f)
+    f.close()
 
-    dirtyWriter = open("dirtyWriter.txt", 'a')
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
             if file.endswith('.htm'):
-                yearGroup = re.search(r'\\20''[0-9]{2}')
-                year = yearGroup.group[0][1:] #stores year that speech was given.
+                #yearGroup = re.search(r'\\20''[0-9]{2}', subdir)
+                #year = yearGroup.group[0][1:] #stores year that speech was given.
+                year = int(subdir[-15:-11])
                 date = subdir[-10:-5] #stores date that speech was given
+                if int(date[:2]) == 1 and year%2 == 1:
+                    if int(date[-2:]) < 3:
+                        year-=1
                 fname = subdir + '\\' + file
                 numberOfDays.add(subdir)
                 f = open(fname, 'r')
@@ -31,7 +43,9 @@ def main():
                     # print (os.path.join(subdir, file))
                 f.close()
                 contents = cleanContents(contents)
+                dirtyWriter = open("dirtyWriter.txt", 'a')
                 dirtyWriter.write(contents)
+                dirtyWriter.close()
                 contentList = cleanForSpeeches(contents)
                 for r in contentList:
                     nameEnd = findNth(r, ".", 2)
@@ -39,7 +53,6 @@ def main():
                     if name not in speakerDict:
                         speakerDict[name] = list()
                     speakerDict[name].append(r[nameEnd:])
-    dirtyWriter.close()
     numberOfSpeeches = 0
     ps = PorterStemmer()
     for speaker in speakerDict:
@@ -51,11 +64,15 @@ def main():
             if len(speakerDict[speaker]) == 1:
                 print(speech)
             speechWords = word_tokenize(speech)
-            count = 0
+            filteredSpeechWords = []
             for w in speechWords:
-                speechWords[count] = ps.stem(w)
+                if w not in stopWords:
+                    filteredSpeechWords.append(w)
+            count = 0
+            for w in filteredSpeechWords:
+                filteredSpeechWords[count] = ps.stem(w)
                 count += 1
-            wordStems[speaker].append(speechWords)
+            wordStems[speaker].append(filteredSpeechWords)
             #print(" ".join(speechWords))
             #TODO: Work on finishing this stemming
 
