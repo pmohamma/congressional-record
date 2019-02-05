@@ -1,9 +1,12 @@
 import os
 import re
 import json
+import nltk
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+import heapq
+
 
 def main():
     rootdir = 'C:/Users/pouya\python-projects\congressional-record\congressionalrecord\output'
@@ -17,6 +20,10 @@ def main():
     numberOfDays = {"ignore this day"}
     wordStems = {}
     stopWords = set(stopwords.words('english'))
+    newStopWords = [',', '...', 'congress', '', 'b', '.', '--', ':', ';', '$', '``', ')', '(', "''", 'year',
+                    'the', "'s", 'c', 'a', 'also', '===============', '..', 'mr.', 'i']
+    stopWords.update(newStopWords)
+
     f = open("currentLegislators.json", "r")
     currentLegislators = json.load(f)
     f.close()
@@ -55,28 +62,59 @@ def main():
                     speakerDict[name].append(r[nameEnd:])
     numberOfSpeeches = 0
     ps = PorterStemmer()
+    wordCount = {}
     for speaker in speakerDict:
-        print(speaker + ":    " + str(len(speakerDict[speaker])))
+        #print(speaker + ":    " + str(len(speakerDict[speaker])))
         numberOfSpeeches += len(speakerDict[speaker])
         if speaker not in wordStems:
             wordStems[speaker] = list()
         for speech in speakerDict[speaker]:
-            if len(speakerDict[speaker]) == 1:
-                print(speech)
+            #if len(speakerDict[speaker]) == 1:
+                #print(speech)
+            bigrams = list(nltk.bigrams(speech.split()))
             speechWords = word_tokenize(speech)
             filteredSpeechWords = []
+            for gram in bigrams:
+                word = ""
+                for w in gram:
+                    word += (w.lower() + " ")
+                word = word[:-1]
+                if not hasNumbers(word):
+                    filteredSpeechWords.append(word)
+
             for w in speechWords:
-                if w not in stopWords:
-                    filteredSpeechWords.append(w)
-            count = 0
-            for w in filteredSpeechWords:
+                word = w.lower()
+                if word not in stopWords:
+                    if not hasNumbers(word):
+                        filteredSpeechWords.append(word)
+            """count = 0
+            for phrase in filteredSpeechWords:
+                wordArr = phrase.split(" ")
+                for
                 filteredSpeechWords[count] = ps.stem(w)
-                count += 1
+                count += 1"""
             wordStems[speaker].append(filteredSpeechWords)
+            #print(filteredSpeechWords)
+            for wo in filteredSpeechWords:
+                #for wo in num:
+                w = wo.lower().replace(",", "")
+                if (hasNumbers(w)):
+                    continue
+                if not w in wordCount:
+                    wordCount[w] = 0
+                wordCount[w] = wordCount[w] + 1
             #print(" ".join(speechWords))
             #TODO: Work on finishing this stemming
 
     print(str(numberOfSpeeches) + " speeches over " + str(len(numberOfDays) - 1) + " days")
+    topWords = []
+    for w in wordCount:
+        heapq.heappush(topWords, (-wordCount[w], w))
+    for h in range(100):
+        print(heapq.heappop(topWords))
+
+def hasNumbers(inputString):
+    return any(char.isdigit() for char in inputString)
 
 def cleanContents(contents):
     bodystart = contents.index('<body>') + 6
