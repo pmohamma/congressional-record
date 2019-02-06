@@ -21,26 +21,34 @@ def main():
     wordStems = {}
     stopWords = set(stopwords.words('english'))
     newStopWords = [',', '...', 'congress', '', 'b', '.', '--', ':', ';', '$', '``', ')', '(', "''", 'year',
-                    'the', "'s", 'c', 'a', 'also', '===============', '..', 'mr.', 'i']
+                    'the', "'s", 'c', 'a', 'also', '===============', '..', 'mr.', 'i', 'roll call',
+                    'madam speaker', "public law", "section", "act", "sec", "secretary state", "made available",
+                    "united states", "mr speaker", "remain available", "funds appropriated"]
     stopWords.update(newStopWords)
 
     f = open("currentLegislators.json", "r")
     currentLegislators = json.load(f)
     f.close()
     f = open("historicalLegislators.json", "r")
-    historicalLegislators = json.load(f)
+    legislators = json.load(f)
     f.close()
+    for year in currentLegislators:
+        if year in legislators:
+            for person in currentLegislators[year]:
+                legislators[year][person] = currentLegislators[year][person]
+        else:
+            legislators[year] = currentLegislators[year]
 
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
             if file.endswith('.htm'):
                 #yearGroup = re.search(r'\\20''[0-9]{2}', subdir)
                 #year = yearGroup.group[0][1:] #stores year that speech was given.
-                year = int(subdir[-15:-11])
+                year = subdir[-15:-11]
                 date = subdir[-10:-5] #stores date that speech was given
-                if int(date[:2]) == 1 and year%2 == 1:
+                """if int(date[:2]) == 1 and year%2 == 1:
                     if int(date[-2:]) < 3:
-                        year-=1
+                        year-=1"""
                 fname = subdir + '\\' + file
                 numberOfDays.add(subdir)
                 f = open(fname, 'r')
@@ -68,7 +76,21 @@ def main():
         numberOfSpeeches += len(speakerDict[speaker])
         if speaker not in wordStems:
             wordStems[speaker] = list()
+        filteredSpeechWords = []
         for speech in speakerDict[speaker]:
+            sp = ""
+            for w in speech.split(" "):
+                word = ""
+                for ch in w:
+                    if ch.isalpha() or ch == " ":
+                        word += ch.lower()
+                if word not in stopWords:
+                    if not hasNumbers(word):
+                        sp += (word + " ")
+            sp = sp[:-1]
+            filteredSpeechWords.append(sp)
+
+        for speech in filteredSpeechWords:
             #if len(speakerDict[speaker]) == 1:
                 #print(speech)
             bigrams = list(nltk.bigrams(speech.split()))
@@ -77,16 +99,12 @@ def main():
             for gram in bigrams:
                 word = ""
                 for w in gram:
-                    word += (w.lower() + " ")
+                    word += (w + " ")
                 word = word[:-1]
                 if not hasNumbers(word):
-                    filteredSpeechWords.append(word)
-
-            for w in speechWords:
-                word = w.lower()
-                if word not in stopWords:
-                    if not hasNumbers(word):
+                    if word not in stopWords:
                         filteredSpeechWords.append(word)
+
             """count = 0
             for phrase in filteredSpeechWords:
                 wordArr = phrase.split(" ")
@@ -97,7 +115,7 @@ def main():
             #print(filteredSpeechWords)
             for wo in filteredSpeechWords:
                 #for wo in num:
-                w = wo.lower().replace(",", "")
+                w = wo
                 if (hasNumbers(w)):
                     continue
                 if not w in wordCount:
@@ -110,8 +128,19 @@ def main():
     topWords = []
     for w in wordCount:
         heapq.heappush(topWords, (-wordCount[w], w))
-    for h in range(100):
-        print(heapq.heappop(topWords))
+    counter = 0
+    while counter < 100:
+        clause = heapq.heappop(topWords)
+        if not hasPhrase(clause):
+            counter+=1
+            print(clause)
+
+def hasPhrase(phraseToCheck):
+    phrasesCheckingFor = {"subsection", "sec", "act"}
+    for word in phraseToCheck:
+        if word in phrasesCheckingFor:
+            return True
+    return False
 
 def hasNumbers(inputString):
     return any(char.isdigit() for char in inputString)
