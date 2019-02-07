@@ -1,3 +1,4 @@
+import stateAbbreviations import getStateAbbreviations
 import os
 import re
 import json
@@ -6,7 +7,6 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import heapq
-
 
 def main():
     rootdir = 'C:/Users/pouya\python-projects\congressional-record\congressionalrecord\output'
@@ -23,21 +23,14 @@ def main():
     newStopWords = [',', '...', 'congress', '', 'b', '.', '--', ':', ';', '$', '``', ')', '(', "''", 'year',
                     'the', "'s", 'c', 'a', 'also', '===============', '..', 'mr.', 'i', 'roll call',
                     'madam speaker', "public law", "section", "act", "sec", "secretary state", "made available",
-                    "united states", "mr speaker", "remain available", "funds appropriated"]
+                    "united states", "mr speaker", "remain available", "funds appropriated", "call roll"]
     stopWords.update(newStopWords)
 
-    f = open("currentLegislators.json", "r")
-    currentLegislators = json.load(f)
-    f.close()
-    f = open("historicalLegislators.json", "r")
-    legislators = json.load(f)
-    f.close()
-    for year in currentLegislators:
-        if year in legislators:
-            for person in currentLegislators[year]:
-                legislators[year][person] = currentLegislators[year][person]
-        else:
-            legislators[year] = currentLegislators[year]
+    legislators = createLegislatorsDict()
+
+    writer = open("legislator.json", 'w')
+    json.dump(legislators, writer)
+    writer.close()
 
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
@@ -64,20 +57,26 @@ def main():
                 contentList = cleanForSpeeches(contents)
                 for r in contentList:
                     nameEnd = findNth(r, ".", 2)
-                    name = r[0:nameEnd]
+                    name = r[0:nameEnd].lower()
+
                     if name not in speakerDict:
                         speakerDict[name] = list()
-                    speakerDict[name].append(r[nameEnd:])
+                    speakerDict[name].append((year, r[nameEnd:]))
     numberOfSpeeches = 0
     ps = PorterStemmer()
     wordCount = {}
     for speaker in speakerDict:
+
         #print(speaker + ":    " + str(len(speakerDict[speaker])))
         numberOfSpeeches += len(speakerDict[speaker])
         if speaker not in wordStems:
             wordStems[speaker] = list()
         filteredSpeechWords = []
-        for speech in speakerDict[speaker]:
+        nameToSearch = speaker[speaker.find(" ") + 1:]
+
+        for tup in speakerDict[speaker]:
+            speech = tup[1]
+            year = tup[0]
             sp = ""
             for w in speech.split(" "):
                 word = ""
@@ -89,6 +88,13 @@ def main():
                         sp += (word + " ")
             sp = sp[:-1]
             filteredSpeechWords.append(sp)
+
+            if nameToSearch in legislators[year]:
+                # print(legislators[year][nameToSearch])
+                pass
+            else:
+                print(speaker + "     " + str(year))
+                print(speech + "\n\n")
 
         for speech in filteredSpeechWords:
             #if len(speakerDict[speaker]) == 1:
@@ -124,7 +130,10 @@ def main():
             #print(" ".join(speechWords))
             #TODO: Work on finishing this stemming
 
-    print(str(numberOfSpeeches) + " speeches over " + str(len(numberOfDays) - 1) + " days")
+    #print(str(numberOfSpeeches) + " speeches over " + str(len(numberOfDays) - 1) + " days")
+    printTopWords(wordCount)
+
+def printTopWords(wordCount):
     topWords = []
     for w in wordCount:
         heapq.heappush(topWords, (-wordCount[w], w))
@@ -133,7 +142,24 @@ def main():
         clause = heapq.heappop(topWords)
         if not hasPhrase(clause):
             counter+=1
-            print(clause)
+            #print(clause)
+
+def createLegislatorsDict():
+    f = open("currentLegislators.json", "r")
+    current = json.load(f)
+    f.close()
+    f = open("historicalLegislators.json", "r")
+    historical = json.load(f)
+    f.close()
+    for year in current:
+        for person in current[year]:
+            if person in historical[year]:
+                historical[year][person + " 2"] = current[year][person]
+            else:
+                historical[year][person] = current[year][person]
+
+    return historical
+
 
 def hasPhrase(phraseToCheck):
     phrasesCheckingFor = {"subsection", "sec", "act"}

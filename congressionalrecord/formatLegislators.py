@@ -1,4 +1,5 @@
 import json
+from stateAbbreviations import getStateAbbreviations
 
 def main(oldFile, newFile):
     f = open(oldFile, 'r')
@@ -11,6 +12,9 @@ def main(oldFile, newFile):
     for i in yearRange:
         newData[str(i)] = {}
 
+    stateAbbreviations = getStateAbbreviations()
+    print(stateAbbreviations)
+
     for i in range(len(oldData)):
         if 'middle' in oldData[i]["name"].values():
             name = (oldData[i]["name"]['first']) + " " + (oldData[i]["name"]['middle']) + " " + (oldData[i]["name"]['last'])
@@ -18,7 +22,9 @@ def main(oldFile, newFile):
             name = (oldData[i]["name"]['first']) + " " + (oldData[i]["name"]['last'])
         #name = oldData[1]["name"]["last"]
         name = stripForLetters(name)
-        keyName = name.split(" ")[-1]
+
+        keyName = name.split(" ")[-1].lower()
+        #print(name)
 
         startDate = oldData[i]['terms'][0]['start']
         startYear = int(startDate[:4])
@@ -33,19 +39,21 @@ def main(oldFile, newFile):
         politician['name'] = oldData[i]['name']
         politician['terms'] = oldData[i]['terms']
 
-        if "Engel" in name:
-            print("start year: " + str(startYear))
-            print("end year: " + str(endYear))
-
         if startYear in yearRange:
-            rangeEnd = min(2019, endYear)
+            rangeEnd = min(2020, endYear)
             for ny in range(startYear, rangeEnd):
-                newData[str(ny)][keyName] = politician
+                if keyName in newData[str(ny)]:
+                    newData[str(ny)][keyName + " " + name] = politician
+                else:
+                    newData[str(ny)][keyName] = politician
         elif endYear in yearRange or endYear > 2019:
             rangeStart = max(startYear, 2005)
             rangeEnd = min(endYear, 2020)
             for ny in range(rangeStart, rangeEnd):
-                newData[str(ny)][keyName] = politician
+                if keyName in newData[str(ny)]:
+                    newData[str(ny)][keyName + " " + name] = politician
+                else:
+                    newData[str(ny)][keyName] = politician
 
 
     json.dump(newData, writer)
@@ -63,9 +71,9 @@ def stripForNumbers(phrase):
 def stripForLetters(phrase):
     word = ""
     for ch in phrase:
-        if ch.isalpha() or ch == " " or ch == "'":
+        if ch.isalpha() or ch == " " or ch == "-" or ch == "'":
             word += ch.lower()
     return word
 
-main("legislators-historical.json", "historicalLegislators.json")
+#main("legislators-historical.json", "historicalLegislators.json")
 main("legislators-current.json", "currentLegislators.json")
