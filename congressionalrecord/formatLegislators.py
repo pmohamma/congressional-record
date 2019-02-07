@@ -13,7 +13,6 @@ def main(oldFile, newFile):
         newData[str(i)] = {}
 
     stateAbbreviations = getStateAbbreviations()
-    print(stateAbbreviations)
 
     for i in range(len(oldData)):
         if 'middle' in oldData[i]["name"].values():
@@ -43,7 +42,16 @@ def main(oldFile, newFile):
             rangeEnd = min(2020, endYear)
             for ny in range(startYear, rangeEnd):
                 if keyName in newData[str(ny)]:
-                    newData[str(ny)][keyName + " " + name] = politician
+                    oldPolitician = newData[str(ny)][keyName]
+                    oldPolState = (stateAbbreviations[oldPolitician['terms'][0]['state']]).lower()
+                    newData[str(ny)][keyName + " of " + oldPolState] = oldPolitician
+                    newData[str(ny)].pop(keyName)
+                    newPolState = (stateAbbreviations[politician['terms'][0]['state']]).lower()
+                    newData[str(ny)][keyName + " of " + newPolState] = politician
+                    print(keyName + " of " + oldPolState)
+                    print(keyName + " of " + newPolState)
+                    print('\n\n')
+
                 else:
                     newData[str(ny)][keyName] = politician
         elif endYear in yearRange or endYear > 2019:
