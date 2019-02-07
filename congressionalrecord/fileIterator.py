@@ -1,4 +1,5 @@
-import stateAbbreviations import getStateAbbreviations
+from stateAbbreviations import getStateAbbreviations
+from politician import Politician
 import os
 import re
 import json
