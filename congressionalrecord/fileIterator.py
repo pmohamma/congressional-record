@@ -49,7 +49,7 @@ def main():
                 contents = ""
                 for line in f:
                     contents += line
-                    # print (os.path.join(subdir, file))
+                chamber = findChamber(os.path.join(file))
                 f.close()
                 contents = cleanContents(contents)
                 dirtyWriter = open("dirtyWriter.txt", 'a')
@@ -59,21 +59,22 @@ def main():
                 for r in contentList:
                     nameEnd = findNth(r, ".", 2)
                     name = r[0:nameEnd].lower()
-
                     if name not in speakerDict:
-                        speakerDict[name] = list()
-                    speakerDict[name].append((year, r[nameEnd:]))
+                        speakerDict[(name, chamber)] = list()
+                    speakerDict[(name, chamber)].append((year, r[nameEnd:]))
     numberOfSpeeches = 0
     ps = PorterStemmer()
     wordCount = {}
     for speaker in speakerDict:
 
+        speakerName = speaker[0]
+        chamber = speaker[1]
         #print(speaker + ":    " + str(len(speakerDict[speaker])))
         numberOfSpeeches += len(speakerDict[speaker])
         if speaker not in wordStems:
             wordStems[speaker] = list()
         filteredSpeechWords = []
-        nameToSearch = speaker[speaker.find(" ") + 1:]
+        nameToSearch = speakerName[speakerName.find(" ") + 1:]
 
         for tup in speakerDict[speaker]:
             speech = tup[1]
@@ -90,11 +91,11 @@ def main():
             sp = sp[:-1]
             filteredSpeechWords.append(sp)
 
-            if nameToSearch in legislators[year]:
+            if (nameToSearch, chamber) in legislators[year]:
                 # print(legislators[year][nameToSearch])
                 pass
             else:
-                print(speaker + "     " + str(year))
+                print(speaker[0] + "      " + speaker[1] + "     " + str(year))
                 print(speech + "\n\n")
 
         for speech in filteredSpeechWords:
@@ -144,6 +145,15 @@ def printTopWords(wordCount):
         if not hasPhrase(clause):
             counter+=1
             #print(clause)
+
+def findChamber(fname):
+    chamberAbb = fname[fname.find("Pg") + 2:][: 1]
+    switcher = {
+        "H": "rep",
+        "S": "sen",
+        "E": "Unknown"
+    }
+    return switcher.get(chamberAbb, "Could Not Find")
 
 def createLegislatorsDict():
     f = open("currentLegislators.json", "r")
@@ -261,10 +271,25 @@ def collectInfo(num, contents):
 
 def findSpeaker(contents):
     speakerSearch = re.search('[M][r,s]{1,2}'r'. ''[A-Z]+[.]', contents)
+    #speakerSearch2 = re.search(r'  ''[M][r,s]{1,2}'r'. ''[A-Z]+[a-z]+[A-Z]+', contents)
+    #loc = float('inf')
+    #loc2 = float('inf')
     try:
         speaker = speakerSearch.group(0)
+        #loc = contents.find(speaker)
     except:
         speaker = "zzzzzzzzzzzzzzzzzzz"
+
+    """try:
+        speaker2 = speakerSearch2.group(0)
+        loc2 = contents.find(speaker2)
+    except:
+        speaker2 = "zzzzzzzzzzzzzzzzzzz"
+
+    if min(speaker, speaker2) != -1 and min(speaker, speaker2) != float('inf'):
+        print(min(speaker, speaker2))
+    """
+
     return speaker
 
 def findFirstOcc(array, contents, startBool = False):
